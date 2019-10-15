@@ -38,13 +38,13 @@ const handleImport = (file: string) => {
         .replace(' from', ' } from')
         .replace(/['|"].*['|"]/, "'@umijs/hooks'");
     }
-      // absolute import
-      const pkgNameRegex = /(?<=["|'])(?:\\.|[^"'\\])*(?=["|'])/g;
-      const pkgName = matchedImport.match(pkgNameRegex);
-      if (pkgName) {
-        deps[pkgName[0]] = 'latest';
-      }
-      return matchedImport;
+    // absolute import
+    const pkgNameRegex = /(?<=["|'])(?:\\.|[^"'\\])*(?=["|'])/g;
+    const pkgName = matchedImport.match(pkgNameRegex);
+    if (pkgName) {
+      deps[pkgName[0]] = 'latest';
+    }
+    return matchedImport;
   });
   return [finalContent, deps] as const;
 };
@@ -110,20 +110,20 @@ ReactDOM.render(
       <div style={{ border: '1px solid #e8e8e8', borderRadius: 5 }}>
         <div style={{ padding: 16 }}>
           <Modal
-              bodyStyle={{ padding: 48 }}
-              destroyOnClose
-              zIndex={1002}
-              style={{ top: '10vh' }}
-              visible={showModel}
-              onCancel={() => setShowModel(v => !v)}
-              width="90vw"
-              footer={null}
-              getContainer={document.body}
-            >
-              <div style={{ overflow: 'auto', width: '100%', height: 'calc(80vh - 48px)' }}>
-                {typeof props.children === 'function' ? props.children() : props.children}
-              </div>
-            </Modal>
+            bodyStyle={{ padding: 48 }}
+            destroyOnClose
+            zIndex={1002}
+            style={{ top: '10vh' }}
+            visible={showModel}
+            onCancel={() => setShowModel(v => !v)}
+            width="90vw"
+            footer={null}
+            getContainer={document.body}
+          >
+            <div style={{ overflow: 'auto', width: '100%', height: 'calc(80vh - 48px)' }}>
+              {typeof props.children === 'function' ? props.children() : props.children}
+            </div>
+          </Modal>
           <div style={{ padding: 16 }}>
             {typeof props.children === 'function' ? props.children() : props.children}
           </div>
