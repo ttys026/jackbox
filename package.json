@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "scripts": {
-    "build": "father build"
+    "build": "father build",
+    "dev": "father build --esm babel --watch"
   },
   "repository": "https://github.com/tli4/jackbox.git",
   "keywords": [
