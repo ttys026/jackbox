@@ -42,11 +42,17 @@ const handleImport = (file: string) => {
     const pkgNameRegex = /(?<=["|'])(?:\\.|[^"'\\])*(?=["|'])/g;
     const pkgName = matchedImport.match(pkgNameRegex);
     if (pkgName) {
-      const name = pkgName[0];
+      const name = pkgName[0].trim();
+      const version = (name.startsWith('@') ? name.split('@')[2] : name.split('@')[1]) || 'latest';
       if(name.includes('/')){
-        deps[name.split('/')[0]] = 'latest';
+        const nameList = name.split('/');
+        if(name.startsWith('@')){
+          deps[nameList[0]+'/'+nameList[1]] = version;
+        } else {
+          deps[nameList[0]] = version;
+        }
       } else {
-        deps[name] = 'latest';
+        deps[name] = version;
       }
     }
     return matchedImport;
