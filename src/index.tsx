@@ -1,7 +1,6 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { Divider, Icon, message, Tooltip, Modal, Radio } from 'antd';
 // @ts-ignore
-// @ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import Editor from 'react-simple-code-editor';
 // @ts-ignore
@@ -86,13 +85,16 @@ export default (props: JackBoxPlayGroudProps) => {
       duration: 2,
       maxCount: 1,
     });
-
-    document.addEventListener('languageChange', (e: LanguageChangeEvent) => {
+    const callback = (e: LanguageChangeEvent) => {
       if (e.detail) {
         setLanguage(e.detail);
         localStorage.setItem('umijs-hooks-code-language', e.detail);
       }
-    });
+    };
+    document.addEventListener('languageChange', callback);
+    return () => {
+      document.removeEventListener('languageChange', callback);
+    };
   }, []);
 
   useEffect(() => {
