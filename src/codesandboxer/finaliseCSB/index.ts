@@ -1,7 +1,7 @@
 import getParameters from './getParameters';
 import { newpkgJSON } from '../constants';
 
-const ensureReact = deps => {
+const ensureReact = (deps: any) => {
   if (!deps.react && !deps['react-dom']) {
     deps.react = 'latest';
     deps['react-dom'] = 'latest';
@@ -12,7 +12,7 @@ const ensureReact = deps => {
   }
 };
 
-export default function({ files, deps, devDependencies }, config) {
+export default ({ files, deps, devDependencies }: any, config: any) => {
   if (!config) config = {};
   const { extraFiles, extraDependencies, name, template = 'create-react-app' } = config;
   let { main } = config;
@@ -44,5 +44,5 @@ export default function({ files, deps, devDependencies }, config) {
     files: finalFiles,
     dependencies,
     parameters,
-  };
-}
+  } as any;
+};

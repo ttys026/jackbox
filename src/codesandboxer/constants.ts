@@ -1,8 +1,8 @@
 export const newpkgJSON = (
-  dependencies,
+  dependencies: any = {},
   name = 'codesandboxer-example',
   main = 'index.js',
-  devDependencies,
+  devDependencies: any = {},
 ) => `{
   "name": "${name}",
   "version": "0.0.0",

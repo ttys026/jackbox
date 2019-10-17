@@ -10,7 +10,7 @@
     "baseUrl": ".",
     "strict": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*.@(ts|tsx)"]
     },
     "allowSyntheticDefaultImports": true
   }
