@@ -1,12 +1,12 @@
 import React, { ReactNode, useState, useEffect } from 'react';
-import { Divider, Icon, message, Tooltip, Modal } from 'antd';
+import { Divider, Icon, message, Tooltip, Modal, Radio } from 'antd';
 // @ts-ignore
-import { finaliseCSB } from 'codesandboxer';
 // @ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import Editor from 'react-simple-code-editor';
 // @ts-ignore
 import { highlight, languages } from 'prismjs/components/prism-core';
+import finaliseCSB from './codesandboxer/finaliseCSB';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-markup';
@@ -16,7 +16,8 @@ require('prismjs/components/prism-jsx');
 
 interface JackBoxPlayGroudProps {
   children: ReactNode | ReactNode[];
-  file?: string;
+  tsCode?: string;
+  jsCode?: string;
   demoName: React.ReactNode;
   description: React.ReactNode;
   locale: 'zh-CN' | 'en-US';
@@ -27,7 +28,7 @@ const handleImport = (file: string) => {
 
   const importRegex = /import(?:["'\s]*([\w*{}\n\r\t, ]+)from\s*)?["'\s].*([@\w_-]+)["'\s].*;?$/gm;
 
-  const finalContent = file.replace(importRegex, matchedImport => {
+  const finalContent = (file || '').replace(importRegex, matchedImport => {
     if (matchedImport.includes('.')) {
       // relative import;
       if (matchedImport.includes('{')) {
@@ -44,10 +45,10 @@ const handleImport = (file: string) => {
     if (pkgName) {
       const name = pkgName[0].trim();
       const version = (name.startsWith('@') ? name.split('@')[2] : name.split('@')[1]) || 'latest';
-      if(name.includes('/')){
+      if (name.includes('/')) {
         const nameList = name.split('/');
-        if(name.startsWith('@')){
-          deps[nameList[0]+'/'+nameList[1]] = version;
+        if (name.startsWith('@')) {
+          deps[`${nameList[0]}/${nameList[1]}`] = version;
         } else {
           deps[nameList[0]] = version;
         }
@@ -60,13 +61,24 @@ const handleImport = (file: string) => {
   return [finalContent, deps] as const;
 };
 
+const event = (lan: 'js' | 'ts') => new CustomEvent('languageChange', { detail: lan });
+
 export default (props: JackBoxPlayGroudProps) => {
   const [expand, setExpand] = useState(false);
   const [param, setParam] = useState('');
   const [showModel, setShowModel] = useState(false);
-  const ret = handleImport(props.file!);
+  const tsRet = handleImport(props.tsCode || '');
+  const jsRet = handleImport(props.jsCode || '');
+  const currentLanguage = localStorage.getItem('umijs-hooks-code-language');
+  const [language, setLanguage] = useState(currentLanguage || 'js');
   const { locale = 'zh-CN' } = props;
   const isChinese = locale === 'zh-CN';
+  const code = language === 'ts' ? tsRet[0] : jsRet[0];
+  const dep = language === 'ts' ? tsRet[1] : jsRet[1];
+
+  interface LanguageChangeEvent extends Partial<Event> {
+    detail?: string;
+  }
 
   useEffect(() => {
     message.config({
@@ -74,22 +86,31 @@ export default (props: JackBoxPlayGroudProps) => {
       duration: 2,
       maxCount: 1,
     });
+
+    document.addEventListener('languageChange', (e: LanguageChangeEvent) => {
+      if (e.detail) {
+        setLanguage(e.detail);
+        localStorage.setItem('umijs-hooks-code-language', e.detail);
+      }
+    });
   }, []);
 
   useEffect(() => {
-    if (props.file) {
-      const finalData = {
+    let tsData = {};
+    let jsData = {};
+    if (props.tsCode) {
+      tsData = {
         files: {
           'index.html': {
-            content: '<div id="root"></div>',
+            content: '<div style="margin: 16px;" id="root"></div>',
           },
           'demo.tsx': {
-            content: ret[0],
+            content: code,
           },
           'index.tsx': {
             content: `import React from 'react';
 import ReactDOM from 'react-dom';
-${ret[1].antd ? "import 'antd/dist/antd.css';" : ''}
+${dep.antd ? "import 'antd/dist/antd.css';" : ''}
 import App from './demo';
 
 /** This is an auto-generated demo from @umijs/hooks
@@ -104,7 +125,7 @@ ReactDOM.render(
           },
         },
         deps: {
-          ...ret[1],
+          ...dep,
           react: '^16.8.0',
           '@babel/runtime': '^7.6.3',
           '@umijs/hooks': 'latest',
@@ -112,9 +133,48 @@ ReactDOM.render(
         template: 'create-react-app-typescript',
         fileName: 'demo.tsx',
       };
-      setParam(finaliseCSB(finalData, { name: 'hooks-demo' }).parameters);
     }
-  }, [props.file]);
+    if (props.jsCode) {
+      jsData = {
+        files: {
+          'index.html': {
+            content: '<div style="margin: 16px;" id="root"></div>',
+          },
+          'demo.jsx': {
+            content: code,
+          },
+          'index.js': {
+            content: `import React from 'react';
+import ReactDOM from 'react-dom';
+${dep.antd ? "import 'antd/dist/antd.css';" : ''}
+import App from './demo';
+
+/** This is an auto-generated demo from @umijs/hooks
+ * if you think it is not working as expected,
+ * please report the issue at 
+ * https://github.com/umijs/hooks/issues
+**/
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);`,
+          },
+        },
+        deps: {
+          ...dep,
+          react: '^16.8.0',
+          '@babel/runtime': '^7.6.3',
+          '@umijs/hooks': 'latest',
+        },
+        devDependencies: {
+          typescript: '3.3.3',
+        },
+        template: 'create-react-app',
+        fileName: 'demo.jsx',
+      };
+    }
+    setParam(finaliseCSB(language === 'ts' ? tsData : jsData, { name: 'hooks-demo' }).parameters);
+  }, [props.tsCode, props.jsCode, language, code, dep]);
 
   return (
     <div className="jackbox-container">
@@ -155,8 +215,25 @@ ReactDOM.render(
           <Divider dashed />
           <div style={{ float: 'right', marginTop: -16 }}>
             <span style={{ marginRight: 16 }}>
+              <span style={{ width: 'fit-content', marginRight: 16 }}>
+                <Radio.Group
+                  value={language}
+                  size="small"
+                  buttonStyle="solid"
+                  onChange={e => {
+                    document.dispatchEvent(event(e.target.value));
+                  }}
+                >
+                  <Radio.Button value="js">
+                    <Tooltip title="查看 JavaScript 代码">JS</Tooltip>
+                  </Radio.Button>
+                  <Radio.Button value="ts">
+                    <Tooltip title="查看 TypeScript 代码">TS</Tooltip>
+                  </Radio.Button>
+                </Radio.Group>
+              </span>
               <CopyToClipboard
-                text={ret[0]}
+                text={code}
                 onCopy={() => message.success(isChinese ? '复制成功' : 'Code Copied')}
               >
                 <span>
@@ -175,7 +252,9 @@ ReactDOM.render(
             <form
               style={{ display: 'inline' }}
               method="POST"
-              action="https://codesandbox.io/api/v1/sandboxes/define"
+              action={`https://codesandbox.io/api/v1/sandboxes/define?query=module=/demo.${
+                language === 'ts' ? 'tsx' : 'jsx'
+              }`}
               target="_blank"
             >
               <input type="hidden" value={param} name="parameters" />
@@ -208,9 +287,9 @@ ReactDOM.render(
           <div style={{ borderTop: '1px solid #e8e8e8', padding: 16 }}>
             <Editor
               readOnly
-              value={ret[0]}
+              value={code}
               onValueChange={() => {}}
-              highlight={code => highlight(code, languages.jsx)}
+              highlight={c => highlight(c, languages.jsx)}
               padding={10}
               className="jackbox-editor"
               style={{
