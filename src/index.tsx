@@ -132,6 +132,9 @@ ReactDOM.render(
           '@babel/runtime': '^7.6.3',
           '@umijs/hooks': 'latest',
         },
+        devDependencies: {
+          typescript: '3.3.3',
+        },
         template: 'create-react-app-typescript',
         fileName: 'demo.tsx',
       };
