@@ -29,6 +29,30 @@ const handleImport = (file: string) => {
 
   const finalContent = (file || '').replace(importRegex, matchedImport => {
     if (matchedImport.includes('.')) {
+      // mixed import, eg. import aaa, { bbb, ccc }, ddd from 'ccc'
+      if (matchedImport.includes(',')) {
+        const replaceLib = matchedImport.replace(/['|"].*['|"]/, "'@umijs/hooks'");
+
+        const firstIndex = replaceLib.indexOf('{');
+        const lastIndex = replaceLib.indexOf('}');
+
+        const spreadImport = replaceLib.slice(firstIndex, lastIndex + 1);
+
+        const defaultImportRegex = /import(.*)from/;
+        const defaultImport = matchedImport.match(defaultImportRegex) || [];
+        let defaultImportName = '';
+        if (defaultImport) {
+          defaultImportName = (defaultImport[1] || '').replace(spreadImport, '').replace(',', '');
+        }
+        return (
+          `import ${
+          spreadImport.slice(0, spreadImport.length - 1)
+          },${
+          defaultImportName
+          }}${
+          replaceLib.slice(lastIndex + 1, replaceLib.length)}`
+        );
+      }
       // relative import;
       if (matchedImport.includes('{')) {
         return matchedImport.replace(/['|"].*['|"]/, "'@umijs/hooks'");
@@ -40,9 +64,9 @@ const handleImport = (file: string) => {
     }
     // absolute import
     const pkgNameRegex = /['|"](.*)['|"]/;
-    const pkgName = (matchedImport.match(pkgNameRegex) || [])[1];
+    const pkgName = matchedImport.match(pkgNameRegex) || [];
     if (pkgName) {
-      const name = pkgName[0].trim();
+      const name = (pkgName[1] || '').trim();
       const version = (name.startsWith('@') ? name.split('@')[2] : name.split('@')[1]) || 'latest';
       if (name.includes('/')) {
         const nameList = name.split('/');
