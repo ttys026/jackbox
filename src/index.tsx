@@ -39,8 +39,8 @@ const handleImport = (file: string) => {
         .replace(/['|"].*['|"]/, "'@umijs/hooks'");
     }
     // absolute import
-    const pkgNameRegex = /(?<=["|'])(?:\\.|[^"'\\])*(?=["|'])/g;
-    const pkgName = matchedImport.match(pkgNameRegex);
+    const pkgNameRegex = /['|"](.*)['|"]/;
+    const pkgName = (matchedImport.match(pkgNameRegex) || [])[1];
     if (pkgName) {
       const name = pkgName[0].trim();
       const version = (name.startsWith('@') ? name.split('@')[2] : name.split('@')[1]) || 'latest';
