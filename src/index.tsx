@@ -25,7 +25,9 @@ interface JackBoxPlayGroudProps {
 const handleImport = (file: string) => {
   const deps: { [key: string]: string } = {};
 
-  const importRegex = /import(?:["'\s]*([\w*{}\n\r\t, ]+)from\s*)?["'\s].*([@\w_-]+)["'\s].*;?$/gm;
+  // const importRegex =
+  // /import(?:["'\s]*([\w*{}\n\r\t, ]+)from\s*)?["'\s].*([@\w_-]+)["'\s].*;?$/gm;
+  const importRegex = /import.*['|"]/gm;
 
   const finalContent = (file || '').replace(importRegex, matchedImport => {
     if (matchedImport.includes('.')) {
@@ -44,14 +46,10 @@ const handleImport = (file: string) => {
         if (defaultImport) {
           defaultImportName = (defaultImport[1] || '').replace(spreadImport, '').replace(',', '');
         }
-        return (
-          `import ${
-          spreadImport.slice(0, spreadImport.length - 1)
-          },${
-          defaultImportName
-          }}${
-          replaceLib.slice(lastIndex + 1, replaceLib.length)}`
-        );
+        return `import ${spreadImport.slice(
+          0,
+          spreadImport.length - 1,
+        )},${defaultImportName}}${replaceLib.slice(lastIndex + 1, replaceLib.length)}`;
       }
       // relative import;
       if (matchedImport.includes('{')) {
